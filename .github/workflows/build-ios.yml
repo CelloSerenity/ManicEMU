@@ -1,0 +1,57 @@
+name: Build iOS app
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Branch or commit to build
+        required: true
+        default: fix-livecontainer-bios-paths
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 120
+    steps:
+      - name: Check out source and dependencies
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.ref }}
+          submodules: recursive
+          lfs: true
+          persist-credentials: false
+
+      - name: Fetch submodule LFS files
+        run: git submodule foreach --recursive 'git lfs pull'
+
+      - name: Verify LFS files
+        run: bash Scripts/VerifyLFS.sh
+
+      - name: Check BIOS path conversion
+        run: |
+          if [ -f Scripts/TestLibretroPath.py ]; then
+            python3 Scripts/TestLibretroPath.py
+          fi
+
+      - name: Build unsigned iOS app
+        run: |
+          xcodebuild \
+            -project ManicEmu/ManicEmu.xcodeproj \
+            -scheme ManicEmuSideload \
+            -configuration SideloadRelease \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath "$RUNNER_TEMP/ManicEmuDerivedData" \
+            CODE_SIGNING_ALLOWED=NO \
+            APP_BUNDLE_IDENTIFIER=com.example.manicemu.buildcheck \
+            build
+
+      - name: Upload unsigned app
+        uses: actions/upload-artifact@v4
+        with:
+          name: ManicEmuSideload-unsigned
+          path: ${{ runner.temp }}/ManicEmuDerivedData/Build/Products/SideloadRelease-iphoneos/ManicEmuSideload.app
+          if-no-files-found: error
+          retention-days: 7
