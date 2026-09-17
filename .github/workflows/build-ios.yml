@@ -44,6 +44,7 @@ jobs:
             -configuration SideloadRelease \
             -destination 'generic/platform=iOS' \
             -derivedDataPath "$RUNNER_TEMP/ManicEmuDerivedData" \
+            -skipPackagePluginValidation \
             CODE_SIGNING_ALLOWED=NO \
             APP_BUNDLE_IDENTIFIER=com.example.manicemu.buildcheck \
             build
