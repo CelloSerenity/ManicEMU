@@ -49,10 +49,20 @@ jobs:
             APP_BUNDLE_IDENTIFIER=com.example.manicemu.buildcheck \
             build
 
-      - name: Upload unsigned app
-        uses: actions/upload-artifact@v4
+      - name: Package unsigned IPA
+        run: |
+          mkdir -p "$RUNNER_TEMP/ManicEmuPackage/Payload"
+          ditto \
+            "$RUNNER_TEMP/ManicEmuDerivedData/Build/Products/SideloadRelease-iphoneos/ManicEmuSideload.app" \
+            "$RUNNER_TEMP/ManicEmuPackage/Payload/ManicEmuSideload.app"
+          ditto -c -k --keepParent \
+            "$RUNNER_TEMP/ManicEmuPackage/Payload" \
+            "$RUNNER_TEMP/ManicEmuSideload-unsigned.ipa"
+
+      - name: Upload unsigned IPA
+        uses: actions/upload-artifact@v7
         with:
-          name: ManicEmuSideload-unsigned
-          path: ${{ runner.temp }}/ManicEmuDerivedData/Build/Products/SideloadRelease-iphoneos/ManicEmuSideload.app
+          path: ${{ runner.temp }}/ManicEmuSideload-unsigned.ipa
+          archive: false
           if-no-files-found: error
           retention-days: 7
