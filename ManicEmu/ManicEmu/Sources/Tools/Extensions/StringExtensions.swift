@@ -354,11 +354,9 @@ extension String {
     }
     
     var libretroPath: String {
-        // Use .backwards for "/Library/" to match the app's Library directory,
-        // not the user's ~/Library on macOS where the container path contains
-        // "/Library/" twice (e.g., /Users/X/Library/Containers/.../Data/Library/...)
-        if let range = self.range(of: "/Documents/") ?? self.range(of: "/Library/", options: .backwards) {
-            return "~" + String(self[range.lowerBound...])
+        let homeDirectory = NSHomeDirectory()
+        if self.hasPrefix(homeDirectory + "/") {
+            return "~" + String(self.dropFirst(homeDirectory.count))
         }
         return self
     }
